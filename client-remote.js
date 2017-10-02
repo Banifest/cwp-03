@@ -7,60 +7,50 @@ const port = 10124;
 
 const client = new net.Socket();
 
-console.log(process.env)
-
-process.on('uncaughtException', function (err) {
+process.on('uncaughtException', function (err)
+{
     console.log(err);
 });
 
-function sleep (time) {
-    return new Promise((resolve) => setTimeout(resolve, time));
-}
 
-class pair{
-    constructor(f, s)
-    {
-        this.first = f;
-        this.second = s;
-    }
-}
+
+let command = "";
+let origAddress = "";
+let copyAddress = "";
+let key = "";
+
 
 client.setEncoding('utf8');
 
 let files = [];
-client.connect(port, function() {
+client.connect(port, function()
+{
+    command = process.argv[2];
+    origAddress = process.argv[3];
+    copyAddress = process.argv[4];
+    key = process.argv[5];
+
     client.write('REMOTE');
     console.log('Connected');
-
 });
+
+
+
 
 
 let iter = 0;
 client.on('data', function(data) {
     if(data === 'ACK' )
-       {
-           client.ACK = true;
-           console.log(files[iter].first);
-           client.write(files[iter].first);
-           iter++;
-       }
-       else if (client.ACK === true && iter < files.length)
-       {
-           console.log(data.toString());
-           console.log(files[iter - 1].second === data.toString() ? 'верно':'ложь')
-           console.log(files[iter].first);
-           client.write(files[iter].first);
-           iter++;
-       }
-       else
-       {
-           console.log(data.toString());
-           console.log(files[iter - 1].second === data.toString() ? 'верно':'ложь')
-           client.destroy();
-       }
+    {
+        client.ACK = true;
+        console.log("ACK");
+        client.write(`${command} ${origAddress} ${copyAddress} ${key}`);
+    }
+    client.destroy();
 });
 
 
-client.on('close', function() {
+client.on('close', function()
+{
     console.log('Connection closed');
 });

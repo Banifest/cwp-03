@@ -1,7 +1,7 @@
 const net = require('net');
 const path = require('path');
 const fs = require("fs");
-
+const crypto = require('crypto');
 
 const port = 10124;
 
@@ -27,7 +27,7 @@ function isAuthClient(data, client)
  * @returns {boolean}
  */
 {
-    if(!client.QA && !client.FILES && !client.REMOTE)
+    if(!client.TYPE)
     {
         client.id = Date.now() + seed++;
         writeLog(`id = ${client.id.toString()}`, client);
@@ -46,7 +46,6 @@ function isAuthClient(data, client)
                     client.TYPE = clientType.REMOTE;
                     break;
             }
-
             activeClient++;
             client.write('ACK');
 
@@ -67,7 +66,7 @@ function isAuthClient(data, client)
     }
 }
 
-function choiseAction(data, client)
+function chooseAction(data, client)
 {
     switch (client.TYPE)
     {
@@ -125,16 +124,31 @@ function choiseAction(data, client)
             });
             break;
         case clientType.REMOTE:
+            const arg = data.split(' ');
 
+            switch (arg[0])
+            {
+                case 'COPY':
+                    console.log('COPY');
+                    fs.createReadStream(arg[1]).pipe(fs.createWriteStream(arg[2]));
+                    break;
+                case 'ENCODE':
+                    const cipher = crypto.createCipher('aes192', arg[3]);
+                    fs.createReadStream(arg[1]).pipe(cipher).pipe(fs.createWriteStream(arg[2]));
+                    break;
+                case 'DECODE':
+                    const decipher = crypto.createDecipher('aes192', arg[3]);
+                    fs.createReadStream(arg[1]).pipe(decipher).pipe(fs.createWriteStream(arg[2]));
+                    break;
+            }
             break;
     }
-
 }
 
 const server = net.createServer((client) =>
 {
     console.log('Client connected');
-    client.setEncoding('base64');
+    client.setEncoding('utf-8');
 
     client.on('data', (data) =>
     {
@@ -143,8 +157,9 @@ const server = net.createServer((client) =>
 
         if(isAuthClient(data, client))
         {
-            choiseAction(data, client);
+            chooseAction(data, client);
         }
+
     });
 
     client.on('end', () =>
