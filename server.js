@@ -8,6 +8,14 @@ const port = 10124;
 let seed = 826;
 let activeClient = 0;
 
+const TEST_CASE = '{' +
+    '"name":"aaa.txt",' +
+    '"info":"TeStEsT"' +
+    '}';
+
+console.log(JSON.parse(TEST_CASE).name);
+
+
 const clientType =
 {
     QA: 0,
@@ -17,7 +25,7 @@ const clientType =
 
 function writeLog(str, client)
 {
-    fs.appendFileSync(`log\\${client.id.toString()}.log`, str.toString() + '\n\r')
+    fs.appendFileSync(`log\\${client.id.toString()}.log`, str.toString() + '\n\r');
 }
 
 function isAuthClient(data, client)
@@ -86,39 +94,28 @@ function chooseAction(data, client)
         case clientType.FILES:
             console.log("files");
 
-            let fileName = "";
-            let dirName = "";
-            data = Buffer.from(data, "base64");
-            JSON.parse(data, (k, v) => {
+            resultParse = JSON.parse(data);
 
-                console.log(k);
-                console.log(v);
-                if (k === "fileName")
-                {
-                    fileName = `${process.env.CWP}\\${client.id}\\${v}`;
-                    dirName = `${process.env.CWP}\\${client.id}`;
+            let dirName = `${process.env.CWP}\\${client.id}`;
+            let fileName = dirName + '\\' + resultParse.fileName;
 
-                }
-                else if (k === "info")
+            fs.stat(dirName, (err, stats) =>
+            {
+                if (!stats)
                 {
-                    console.log(fileName);
-                    fs.stat(dirName, (err, stats) =>
+                    fs.mkdir(dirName, () =>
                     {
-                        if (!stats) {
-                            fs.mkdir(dirName, () =>
-                            {
-                                fs.writeFile(fileName, v, (err) =>
-                                {
-                                    console.log(err);
-                                });
-                            });
-                        }
-                        else {
-                            fs.writeFile(fileName, v, (err) =>
-                            {
-                                console.log(err);
-                            });
-                        }
+                        fs.writeFile(fileName, resultParse.info, 'base64', (err) =>
+                        {
+                            console.log(err);
+                        });
+                    });
+                }
+                else
+                {
+                    fs.writeFile(fileName, resultParse.info, 'base64', (err) =>
+                    {
+                        console.log(err);
                     });
                 }
             });
@@ -152,6 +149,7 @@ const server = net.createServer((client) =>
 
     client.on('data', (data) =>
     {
+        client.setNoDelay(true);
         console.log(data);
         console.log('\n\n\n');
 
