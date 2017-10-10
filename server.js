@@ -92,33 +92,48 @@ function chooseAction(data, client)
             }
             break;
         case clientType.FILES:
-            console.log("files");
 
-            resultParse = JSON.parse(data);
+            arr = data.replace(/\n/g, '').split('}');
+            arr.pop();
+            console.log(arr);
 
-            let dirName = `${process.env.CWP}\\${client.id}`;
-            let fileName = dirName + '\\' + resultParse.fileName;
-
-            fs.stat(dirName, (err, stats) =>
+            for(let i = 0; i<arr.length;i++)
             {
-                if (!stats)
+                console.log('ZZZ');
+                console.log(arr[i]);
+                resultParse = JSON.parse(arr[i]+'}');
+                console.log(resultParse);
+                let dirName = `${process.env.CWP}\\${client.id}`;
+                let fileName = dirName + '\\' + resultParse.fileName;
+
+                fs.stat(dirName, (err, stats) =>
                 {
-                    fs.mkdir(dirName, () =>
+                    console.log('A');
+                    if (!stats)
                     {
-                        fs.writeFile(fileName, resultParse.info, 'base64', (err) =>
+                        console.log('B');
+                        fs.mkdir(dirName, () =>
                         {
+                            console.log('C');
+                            fs.writeFile(fileName, resultParse.info, 'base64', (err) =>
+                            {
+                                console.log('FF');
+                                console.log(err);
+                            });
+                        });
+                    }
+                    else
+                    {
+                        console.log('--B');
+                        fs.writeFile(fileName, resultParse["info"], 'base64', (err) =>
+                        {
+                            console.log('--C');
                             console.log(err);
                         });
-                    });
-                }
-                else
-                {
-                    fs.writeFile(fileName, resultParse.info, 'base64', (err) =>
-                    {
-                        console.log(err);
-                    });
-                }
-            });
+                    }
+                });
+            }
+            client.write("DES");
             break;
         case clientType.REMOTE:
             const arg = data.split(' ');

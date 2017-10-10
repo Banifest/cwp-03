@@ -51,6 +51,10 @@ client.connect(port, function()
 
 let iter = 0;
 client.on('data', function(data) {
+    if(data === 'DES')
+    {
+        client.destroy();
+    }
     /*   if(data === 'ACK' )
        {
            client.ACK = true;
