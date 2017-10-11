@@ -46,7 +46,14 @@ client.on('data', function(data) {
         console.log("ACK");
         client.write(`${command} ${origAddress} ${copyAddress} ${key}`);
     }
-    client.destroy();
+    else if(data === "OK")
+    {
+        client.destroy();
+    }
+    else
+    {
+        client.destroy();
+    }
 });
 
 

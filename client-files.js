@@ -16,8 +16,8 @@ client.setEncoding('utf8');
 let files = [];
 client.connect(port, function()
 {
-    client.setNoDelay(true);
-    console.log(client)
+    //client.setNoDelay(true);
+    console.log(client);
 
     client.write('FILES', ()=>
     {

@@ -29,11 +29,6 @@ function writeLog(str, client)
 }
 
 function isAuthClient(data, client)
-/**
- * @param data
- * @param client
- * @returns {boolean}
- */
 {
     if(!client.TYPE)
     {
@@ -95,45 +90,37 @@ function chooseAction(data, client)
 
             arr = data.replace(/\n/g, '').split('}');
             arr.pop();
-            console.log(arr);
+            //console.log(arr);
 
             for(let i = 0; i<arr.length;i++)
             {
-                console.log('ZZZ');
                 console.log(arr[i]);
-                resultParse = JSON.parse(arr[i]+'}');
+                let resultParse = JSON.parse(arr[i]+'}');
                 console.log(resultParse);
                 let dirName = `${process.env.CWP}\\${client.id}`;
                 let fileName = dirName + '\\' + resultParse.fileName;
 
                 fs.stat(dirName, (err, stats) =>
                 {
-                    console.log('A');
                     if (!stats)
                     {
-                        console.log('B');
                         fs.mkdir(dirName, () =>
                         {
-                            console.log('C');
                             fs.writeFile(fileName, resultParse.info, 'base64', (err) =>
                             {
-                                console.log('FF');
-                                console.log(err);
+                                //console.log(err);
                             });
                         });
                     }
                     else
                     {
-                        console.log('--B');
-                        fs.writeFile(fileName, resultParse["info"], 'base64', (err) =>
+                        fs.writeFile(fileName, resultParse.info, 'base64', (err) =>
                         {
-                            console.log('--C');
-                            console.log(err);
+                            //console.log(err);
                         });
                     }
                 });
             }
-            client.write("DES");
             break;
         case clientType.REMOTE:
             const arg = data.split(' ');
@@ -142,15 +129,24 @@ function chooseAction(data, client)
             {
                 case 'COPY':
                     console.log('COPY');
-                    fs.createReadStream(arg[1]).pipe(fs.createWriteStream(arg[2]));
+                    fs.createReadStream(arg[1]).pipe(fs.createWriteStream(arg[2])).on('close', ()=>
+                    {
+                        client.write("OK");
+                    });
                     break;
                 case 'ENCODE':
                     const cipher = crypto.createCipher('aes192', arg[3]);
-                    fs.createReadStream(arg[1]).pipe(cipher).pipe(fs.createWriteStream(arg[2]));
+                    fs.createReadStream(arg[1]).pipe(cipher).pipe(fs.createWriteStream(arg[2]),()=>
+                    {
+                        client.write("OK");
+                    });
                     break;
                 case 'DECODE':
                     const decipher = crypto.createDecipher('aes192', arg[3]);
-                    fs.createReadStream(arg[1]).pipe(decipher).pipe(fs.createWriteStream(arg[2]));
+                    fs.createReadStream(arg[1]).pipe(decipher).pipe(fs.createWriteStream(arg[2]),()=>
+                    {
+                        client.write("OK");
+                    });
                     break;
             }
             break;
